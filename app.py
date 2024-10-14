@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # Import necessary libraries
+import os
 import torch
 from transformers import pipeline
 import librosa
@@ -73,25 +74,34 @@ def extract_features(x, sr):
     
     return mfccs, chromagram, zero_crossings, rolloff
 
+# Create directories for saving files
+def create_directories(base_dir='output'):
+    os.makedirs(base_dir, exist_ok=True)
+    os.makedirs(os.path.join(base_dir, 'wav_files'), exist_ok=True)
+    os.makedirs(os.path.join(base_dir, 'mfccs'), exist_ok=True)
+    os.makedirs(os.path.join(base_dir, 'chromas'), exist_ok=True)
+
 # Save extracted features
-def save_features(mfccs, chromagram, mfcc_filename='mfccs.npy', chroma_filename='chroma.npy'):
-    np.save(mfcc_filename, mfccs)       # Save MFCCs
-    np.save(chroma_filename, chromagram)  # Save Chroma Frequencies
-    print(f"Features saved: {mfcc_filename}, {chroma_filename}")
+def save_features(mfccs, chromagram, i, base_dir='output'):
+    np.save(os.path.join(base_dir, 'mfccs', f'mfccs_{i}.npy'), mfccs)       # Save MFCCs
+    np.save(os.path.join(base_dir, 'chromas', f'chroma_{i}.npy'), chromagram)  # Save Chroma Frequencies
+    print(f"Features saved: mfccs_{i}.npy, chroma_{i}.npy")
 
 # Process the entire dataset
 def process_dataset(ds):
     sample_rate = 16000  # Sample rate for saving .wav files
+    create_directories()  # Create output directories
     
     for i in range(len(ds['test_0'])):  # Iterate through the dataset
         input_values = ds['test_0'][i]['input_values']
         visualize_audio_features(input_values)
         
         # Save the audio as a .wav file
-        save_as_wav(input_values, sample_rate, filename=f'reconstructed_audio_{i}.wav')
+        wav_filename = f'reconstructed_audio_{i}.wav'
+        save_as_wav(input_values, sample_rate, filename=os.path.join('output', 'wav_files', wav_filename))
         
         # Reload the audio
-        audio_data = f'reconstructed_audio_{i}.wav'
+        audio_data = os.path.join('output', 'wav_files', wav_filename)
         x, sr = reload_audio(audio_data, sr=sample_rate)
         
         # Plot waveform and spectrogram
@@ -105,7 +115,7 @@ def process_dataset(ds):
         mfccs, chromagram, zero_crossings, rolloff = extract_features(x, sr)
         
         # Save extracted features
-        save_features(mfccs, chromagram, mfcc_filename=f'mfccs_{i}.npy', chroma_filename=f'chroma_{i}.npy')
+        save_features(mfccs, chromagram, i)
 
 # Main execution
 if __name__ == "__main__":
