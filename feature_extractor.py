@@ -12,4 +12,4 @@ class FeatureExtractor:
     def save_features(self, mfccs, chromagram, i, base_dir='output'):
         np.save(f'{base_dir}/mfccs/mfccs_{i}.npy', mfccs)
         np.save(f'{base_dir}/chromas/chroma_{i}.npy', chromagram)
-        print(f"Features saved: mfccs_{i}.npy, chroma_{i}.npy")
+        #print(f"Features saved: mfccs_{i}.npy, chroma_{i}.npy")
