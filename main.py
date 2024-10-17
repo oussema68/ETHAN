@@ -9,10 +9,7 @@ def create_directories(base_dir='output'):
     os.makedirs(os.path.join(base_dir, 'wav_files'), exist_ok=True)
     os.makedirs(os.path.join(base_dir, 'mfccs'), exist_ok=True)
     os.makedirs(os.path.join(base_dir, 'chromas'), exist_ok=True)
-
-def file_exists(file_path):
-    """Helper function to check if a file exists."""
-    return os.path.exists(file_path)
+    os.makedirs(os.path.join(base_dir, 'markers'), exist_ok=True)  # Directory for marker files
 
 def process_dataset():
     dataset_handler = DatasetHandler()
@@ -25,37 +22,46 @@ def process_dataset():
 
     dataset_length = len(dataset['test_0'])
 
-    # Progress bars for overall tasks
-    with tqdm(total=dataset_length, desc="Reconstructing Audio", unit="file") as audio_bar, \
-         tqdm(total=dataset_length, desc="Extracting Features", unit="file") as feature_bar:
+    # Path to the global marker file that indicates the entire dataset has been processed
+    dataset_marker_filepath = os.path.join('output', 'markers', 'dataset_processed.txt')
+
+    # Check if the dataset marker file exists; if yes, skip the entire processing
+    if os.path.exists(dataset_marker_filepath):
+        print("Dataset has already been processed. Skipping...")
+        return
+
+    # Otherwise, proceed to process the dataset
+    with tqdm(total=dataset_length, desc="Processing Audio and Features", unit="file") as progress_bar:
 
         for i in range(dataset_length):
-            input_values = dataset['test_0'][i]['input_values']
             wav_filename = f'reconstructed_audio_{i}.wav'
             wav_filepath = os.path.join('output', 'wav_files', wav_filename)
 
-            mfcc_filename = f'mfcc_{i}.npy'
-            chroma_filename = f'chroma_{i}.npy'
-            mfcc_filepath = os.path.join('output', 'mfccs', mfcc_filename)
-            chroma_filepath = os.path.join('output', 'chromas', chroma_filename)
+            mfcc_filepath = os.path.join('output', 'mfccs', f'mfcc_{i}.npy')
+            chroma_filepath = os.path.join('output', 'chromas', f'chroma_{i}.npy')
 
-            # Check if audio file already exists, if not, reconstruct it
-            if not file_exists(wav_filepath):
+            input_values = dataset['test_0'][i]['input_values']
+
+            # Reconstruct audio if necessary
+            if not os.path.exists(wav_filepath):
                 audio_processor.save_as_wav(input_values, filename=wav_filepath)
-            
-            # Update audio reconstruction progress
-            audio_bar.update(1)
 
             # Reload the audio for feature extraction
             x, sr = audio_processor.reload_audio(wav_filepath)
 
-            # Check if features already exist, if not, extract and save them
-            if not file_exists(mfcc_filepath) or not file_exists(chroma_filepath):
+            # Extract and save features if necessary
+            if not os.path.exists(mfcc_filepath) or not os.path.exists(chroma_filepath):
                 mfccs, chromagram, zero_crossings, rolloff = feature_extractor.extract_features(x, sr)
                 feature_extractor.save_features(mfccs, chromagram, i)
 
-            # Update feature extraction progress
-            feature_bar.update(1)
+            # Update progress bar after processing
+            progress_bar.update(1)
+
+    # Once all files are processed, create the dataset marker file
+    with open(dataset_marker_filepath, 'w') as dataset_marker_file:
+        dataset_marker_file.write("Dataset processed successfully.")
+
+    print("Processing complete. Dataset marker file created.")
 
 if __name__ == "__main__":
     process_dataset()
