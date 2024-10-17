@@ -2,32 +2,16 @@ import os
 from datasets import load_dataset
 
 class DatasetHandler:
-    """
-    Class to handle loading datasets from Hugging Face, ensuring that
-    the dataset is not re-downloaded if it already exists locally.
-    """
-    
-    def __init__(self, dataset_name="willcai/wav2vec2_common_voice_accents_3", data_dir='./data'):
-        """
-        Initialize the DatasetHandler with the dataset name and data directory.
-        
-        Parameters:
-        dataset_name (str): The name of the dataset to load from Hugging Face.
-        data_dir (str): The directory where the dataset is stored locally.
-        """
+    def __init__(self, dataset_name="willcai/wav2vec2_common_voice_accents_3", data_dir='data'):
         self.dataset_name = dataset_name
+        self.data_dir = data_dir  # Directory where the dataset is cached
         self.dataset = None
-        self.data_dir = data_dir
 
     def dataset_exists(self):
-        """
-        Check if the dataset files exist in the specified data directory.
-
-        Returns:
-        bool: True if the dataset exists, False otherwise.
-        """
-        # Check if the data directory exists and contains files
-        return os.path.exists(self.data_dir) and len(os.listdir(self.data_dir)) > 0
+        """Check if the dataset files exist in the specified directory."""
+        if not os.path.exists(self.data_dir):
+            return False
+        return any(os.listdir(self.data_dir))  # Check if the directory is not empty
 
     def load_data(self):
         """
@@ -41,12 +25,20 @@ class DatasetHandler:
         """
         if self.dataset_exists():
             print("Loading dataset from local storage...")
-            self.dataset = load_dataset(self.dataset_name, cache_dir=self.data_dir)
-        else:
             try:
-                print("Downloading dataset from Hugging Face...")
                 self.dataset = load_dataset(self.dataset_name, cache_dir=self.data_dir)
             except Exception as e:
-                raise ValueError(f"Error loading dataset '{self.dataset_name}': {e}")
+                print(f"Failed to load dataset from cache: {e}. Attempting to download again.")
+                self.download_dataset()
+        else:
+            self.download_dataset()
 
         return self.dataset
+
+    def download_dataset(self):
+        """Download the dataset from Hugging Face."""
+        try:
+            print("Downloading dataset from Hugging Face...")
+            self.dataset = load_dataset(self.dataset_name, cache_dir=self.data_dir)
+        except Exception as e:
+            raise ValueError(f"Error downloading dataset '{self.dataset_name}': {e}")
