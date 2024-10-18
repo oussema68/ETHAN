@@ -3,6 +3,8 @@ from dataset_handler import DatasetHandler
 from audio_processor import AudioProcessor
 from feature_extractor import FeatureExtractor
 from tqdm import tqdm  # For progress visualization
+from completion_checker import check_processing_completion
+
 
 def create_directories(base_dir='output'):
     os.makedirs(base_dir, exist_ok=True)
@@ -64,4 +66,11 @@ def process_dataset():
     print("Processing complete. Dataset marker file created.")
 
 if __name__ == "__main__":
-    process_dataset()
+    dataset_marker_filepath = os.path.join('output', 'markers', 'dataset_processed.txt')
+
+    if check_processing_completion(dataset_marker_filepath):
+        # Skip processing if marker file exists
+        pass
+    else:
+        # Start processing the dataset
+        process_dataset()
