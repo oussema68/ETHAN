@@ -1,4 +1,5 @@
 import os
+import random
 from dataset_handler import DatasetHandler
 from audio_processor import AudioProcessor
 from feature_extractor import FeatureExtractor
@@ -33,31 +34,31 @@ def process_dataset():
         return
 
     # Otherwise, proceed to process the dataset
-    with tqdm(total=dataset_length, desc="Processing Audio and Features", unit="file") as progress_bar:
+    with tqdm(total=1, desc="Processing Audio and Features", unit="file", bar_format='{l_bar}{bar}|') as progress_bar:
 
-        for i in range(dataset_length):
-            wav_filename = f'reconstructed_audio_{i}.wav'
-            wav_filepath = os.path.join('output', 'wav_files', wav_filename)
+        i = random.randint(0, dataset_length - 1)  # Use randint to get a random index
+        wav_filename = f'reconstructed_audio_{i}.wav'
+        wav_filepath = os.path.join('output', 'wav_files', wav_filename)
 
-            mfcc_filepath = os.path.join('output', 'mfccs', f'mfcc_{i}.npy')
-            chroma_filepath = os.path.join('output', 'chromas', f'chroma_{i}.npy')
+        mfcc_filepath = os.path.join('output', 'mfccs', f'mfcc_{i}.npy')
+        chroma_filepath = os.path.join('output', 'chromas', f'chroma_{i}.npy')
 
-            input_values = dataset['test_0'][i]['input_values']
+        input_values = dataset['test_0'][i]['input_values']
 
-            # Reconstruct audio if necessary
-            if not os.path.exists(wav_filepath):
-                audio_processor.save_as_wav(input_values, filename=wav_filepath)
+        # Reconstruct audio if necessary
+        if not os.path.exists(wav_filepath):
+            audio_processor.save_as_wav(input_values, filename=wav_filepath)
 
-            # Reload the audio for feature extraction
-            x, sr = audio_processor.reload_audio(wav_filepath)
+        # Reload the audio for feature extraction
+        x, sr = audio_processor.reload_audio(wav_filepath)
 
-            # Extract and save features if necessary
-            if not os.path.exists(mfcc_filepath) or not os.path.exists(chroma_filepath):
-                mfccs, chromagram, zero_crossings, rolloff = feature_extractor.extract_features(x, sr)
-                feature_extractor.save_features(mfccs, chromagram, i)
+        # Extract and save features if necessary
+        if not os.path.exists(mfcc_filepath) or not os.path.exists(chroma_filepath):
+            mfccs, chromagram, zero_crossings, rolloff = feature_extractor.extract_features(x, sr)
+            feature_extractor.save_features(mfccs, chromagram, i)
 
-            # Update progress bar after processing
-            progress_bar.update(1)
+        # Update progress bar after processing
+        progress_bar.update(1)
 
     # Once all files are processed, create the dataset marker file
     with open(dataset_marker_filepath, 'w') as dataset_marker_file:

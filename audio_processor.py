@@ -14,7 +14,7 @@ class AudioProcessor:
             input_values = np.array(input_values)
             input_values = np.interp(input_values, (input_values.min(), input_values.max()), (-1, 1))
             sf.write(filename, input_values, self.sample_rate)
-            print(f"WAV file created: {filename}")
+            
         else:
             print(f"WAV file already exists: {filename}")
 
