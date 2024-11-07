@@ -14,7 +14,7 @@ def create_directories(base_dir='output'):
 
 def process_dataset():
     dataset_handler = DatasetHandler()
-    feature_extractor = FeatureExtractor()
+    #feature_extractor = FeatureExtractor()
     
     # Load dataset and set up output directories
     dataset = dataset_handler.load_data()
