@@ -12,15 +12,8 @@ def create_directories(base_dir='output'):
     os.makedirs(os.path.join(base_dir, 'chromas'), exist_ok=True)
     os.makedirs(os.path.join(base_dir, 'markers'), exist_ok=True)  # Directory for marker files
 
-def process_dataset():
-    dataset_handler = DatasetHandler()
-    #feature_extractor = FeatureExtractor()
-    
-    # Load dataset and set up output directories
-    dataset = dataset_handler.load_data()
-    create_directories()
-    
-    # Path to the global marker file indicating the entire dataset has been processed
+def process_dataset(dataset):
+    create_directories()  # Ensures output directories are set up
     dataset_marker_filepath = os.path.join('output', 'markers', 'dataset_processed.txt')
 
     # Check if the dataset has already been processed
@@ -28,15 +21,25 @@ def process_dataset():
         print("Dataset has already been processed. Skipping...")
         return
 
-    # Process the dataset (main logic)
+    # Initialize feature extractor
+    feature_extractor = FeatureExtractor()
+
+    # Process each audio sample
     for i, sample in enumerate(tqdm(dataset['test_0'], desc="Processing Audio and Features", unit="file")):
-        # Perform feature extraction etc. (skip code for brevity)
-        pass
+        input_values = np.array(sample['input_values'])  # Convert input values to numpy array if necessary
+        sr = 16000  # Sample rate (set to 16000 as an example, adjust as needed)
+
+        # Extract features
+        mfccs, chromagram, _, _ = feature_extractor.extract_features(input_values, sr)  # Ignore unwanted features
+
+        # Save features using FeatureExtractor's save method
+        feature_extractor.save_features(mfccs, chromagram, i)
 
     # Create marker file upon completion
     with open(dataset_marker_filepath, 'w') as dataset_marker_file:
         dataset_marker_file.write("Dataset processed successfully.")
     print("Processing complete.")
+
 
 if __name__ == "__main__":
     dataset_handler = DatasetHandler()
@@ -49,4 +52,4 @@ if __name__ == "__main__":
         reconstructor.reconstruct_random_audio()
 
     # Run main processing logic
-    process_dataset()
+    process_dataset(dataset)
