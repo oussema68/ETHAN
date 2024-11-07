@@ -2,7 +2,7 @@ import os
 from dataset_handler import DatasetHandler
 from feature_extractor import FeatureExtractor
 from tqdm import tqdm
-from completion_checker import check_processing_completion
+#from completion_checker import check_processing_completion
 from audio_reconstructor import AudioReconstructor
 
 def create_directories(base_dir='output'):

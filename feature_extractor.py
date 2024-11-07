@@ -13,3 +13,7 @@ class FeatureExtractor:
         np.save(f'{base_dir}/mfccs/mfccs_{i}.npy', mfccs)
         np.save(f'{base_dir}/chromas/chroma_{i}.npy', chromagram)
         #print(f"Features saved: mfccs_{i}.npy, chroma_{i}.npy")
+
+'''Zero-crossings and spectral rolloff could be computed 
+later if needed but are generally less useful as standalone 
+features in this contex'''
