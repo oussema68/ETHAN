@@ -1,9 +1,14 @@
 import os
+import warnings
+warnings.filterwarnings("ignore")  # Suppress warnings globally
+
 from dataset_handler import DatasetHandler
 from feature_extractor import FeatureExtractor
 from tqdm import tqdm
+import numpy as np
 #from completion_checker import check_processing_completion
 from audio_reconstructor import AudioReconstructor
+from audio_processor import AudioProcessor
 
 def create_directories(base_dir='output'):
     os.makedirs(base_dir, exist_ok=True)
@@ -20,25 +25,37 @@ def process_dataset(dataset):
     if os.path.exists(dataset_marker_filepath):
         print("Dataset has already been processed. Skipping...")
         return
+    else:
+        # Initialize audio processor
+        audio_processor = AudioProcessor()
 
-    # Initialize feature extractor
-    feature_extractor = FeatureExtractor()
+        # Initialize feature extractor
+        feature_extractor = FeatureExtractor()
 
-    # Process each audio sample
-    for i, sample in enumerate(tqdm(dataset['test_0'], desc="Processing Audio and Features", unit="file")):
-        input_values = np.array(sample['input_values'])  # Convert input values to numpy array if necessary
-        sr = 16000  # Sample rate (set to 16000 as an example, adjust as needed)
+        # Process each audio sample
+       
+        for i, sample in enumerate(tqdm(dataset['test_0'], desc="Processing Audio and Features", unit="file")):
+            input_values = np.array(sample['input_values'])
 
-        # Extract features
-        mfccs, chromagram, _, _ = feature_extractor.extract_features(input_values, sr)  # Ignore unwanted features
+            # Preprocess audio
+            x_normalized, y_filt = audio_processor.preprocess_audio(input_values)
 
-        # Save features using FeatureExtractor's save method
-        feature_extractor.save_features(mfccs, chromagram, i)
+            # Skip empty or silent audio data
+            if not np.any(x_normalized):
+                print(f"Skipping sample {i} due to silence.")
+                continue
+            
+            try:
+                # Extract features only if audio is valid
+                sr = 16000
+                mfccs, chromagram, _, _ = feature_extractor.extract_features(x_normalized, sr)
+                feature_extractor.save_features(mfccs, chromagram, i)
 
-    # Create marker file upon completion
-    with open(dataset_marker_filepath, 'w') as dataset_marker_file:
-        dataset_marker_file.write("Dataset processed successfully.")
-    print("Processing complete.")
+            except Exception as e:
+                print(f"Error processing sample {i}: {e}")
+
+
+            
 
 
 if __name__ == "__main__":
