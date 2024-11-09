@@ -54,6 +54,11 @@ def process_dataset(dataset):
             except Exception as e:
                 print(f"Error processing sample {i}: {e}")
 
+        # After processing all samples, create the marker file
+        with open(dataset_marker_filepath, 'w') as marker_file:
+            marker_file.write("Dataset processed successfully.")
+
+
 
             
 
