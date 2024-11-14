@@ -23,3 +23,7 @@ env/
 
 # Logs
 *.log
+
+
+#useful codes
+datasetpartioner.py
